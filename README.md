@@ -8,10 +8,6 @@
 
 A production-ready **FastAPI** starter with **Hexagonal Architecture** (Ports & Adapters) and **CQRS** pattern. Features JWT authentication, async event-driven user creation via RabbitMQ, PostgreSQL persistence, and Alembic migrations.
 
-<p align="center">
-  <img src="docs/swagger-screenshot.png" alt="Swagger API Documentation" width="700">
-</p>
-
 ---
 
 ## Prerequisites
@@ -145,9 +141,36 @@ The API will be available at **http://localhost:8000/docs**.
 
 ## Architecture
 
-<p align="center">
-  <img src="docs/architecture.svg" alt="Hexagonal Architecture Diagram" width="800">
-</p>
+```mermaid
+graph TB
+    subgraph IL["Interface Layer"]
+        direction TB
+        HTTP["HTTP Controllers (FastAPI)"]
+        ASYNC["Async Consumers (RabbitMQ)"]
+        EXT["External Systems (PostgreSQL, RabbitMQ)"]
+    end
+
+    subgraph AL["Application Layer"]
+        direction TB
+        CMD["Command Side (CQRS Write)
+RegisterUser · CreateUser"]
+        QRY["Query Side (CQRS Read)
+GetUsers · LoginUser"]
+    end
+
+    subgraph DL["Domain Layer"]
+        direction TB
+        ENT["Entities & Value Objects
+framework-agnostic"]
+        PRT["Ports (ABCs)
+Repository · EventBus"]
+    end
+
+    HTTP -->|commands / queries| CMD & QRY
+    ASYNC -->|events| CMD
+    CMD & QRY --> ENT & PRT
+    EXT -.-> HTTP & ASYNC
+```
 
 The project follows **Hexagonal Architecture** (Ports & Adapters) with **CQRS**:
 
@@ -157,6 +180,34 @@ The project follows **Hexagonal Architecture** (Ports & Adapters) with **CQRS**:
 - **Bounded Contexts** — `auth` and `users` are self-contained with their own layers
 - **Event-Driven** — Async user creation via RabbitMQ, consumed by background workers
 - **Dependency Injection** — Centralized wiring via `dependency-injector`
+
+---
+
+## Project Structure
+
+```
+src/
+├── contexts/
+│   ├── auth/                          # Bounded context: authentication
+│   │   ├── domain/                    #   Entities, value objects, repository ports
+│   │   ├── application/               #   Command & query handlers
+│   │   │   ├── commands/              #     RegisterUser
+│   │   │   └── queries/               #     LoginUser, AuthUsers
+│   │   ├── infrastructure/            #   SQLAlchemy repository (adapter)
+│   │   └── interfaces/http/           #   FastAPI controller
+│   └── users/                         # Bounded context: user management
+│       ├── domain/                    #   Entities, value objects, repository ports
+│       ├── application/               #   Command & query handlers
+│       │   ├── commands/              #     CreateUser
+│       │   └── queries/               #     GetUser, GetUsers
+│       ├── infrastructure/            #   SQLAlchemy repo, RabbitMQ event handler
+│       └── interfaces/http/           #   FastAPI controller
+├── shared/                            # Shared kernel
+│   ├── application/                   #   Ports (EventBus), DI wiring, auth, exceptions
+│   ├── infrastructure/                #   Config, database, event bus (RabbitMQ)
+│   └── interfaces/                    #   Shared error schemas
+└── main.py                            # App entry point
+```
 
 ---
 

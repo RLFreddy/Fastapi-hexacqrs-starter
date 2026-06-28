@@ -1,5 +1,6 @@
 .venv
 .git
+.gitignore
 __pycache__
 *.pyc
 .ruff_cache
@@ -9,3 +10,9 @@ __pycache__
 requirements.txt
 requirements-dev.txt
 .python-version
+tests/
+docs/
+.github/
+Makefile
+docker-compose.yml
+AGENTS.md
