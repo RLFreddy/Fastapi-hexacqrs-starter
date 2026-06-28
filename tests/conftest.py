@@ -1,35 +1,35 @@
 import os
+import uuid
 
-os.environ["DATABASE_URL"] = "sqlite:///test.db"
+os.environ["DATABASE_URL"] = f"sqlite:////tmp/test_{uuid.uuid4().hex}.db"
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["RABBITMQ_URL"] = "amqp://guest:guest@localhost:5672/"
 
 import pytest
 from dependency_injector import providers
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 
 from src.main import app, container
-from src.shared.infrastructure.database import Base
+from src.shared.infrastructure.database import Base, engine
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _setup_db():
-    engine = create_engine("sqlite:///test.db")
     Base.metadata.create_all(bind=engine)
     yield
     engine.dispose()
+    db_path = engine.url.database
+    if db_path and os.path.exists(db_path):
+        os.remove(db_path)
 
 
 @pytest.fixture(autouse=True)
 def _clean_db():
-    from src.shared.infrastructure.database import SessionLocal
+    from sqlalchemy import text
 
-    session = SessionLocal()
-    for table in reversed(Base.metadata.sorted_tables):
-        session.execute(table.delete())
-    session.commit()
-    session.close()
+    with engine.begin() as conn:
+        for table in reversed(Base.metadata.sorted_tables):
+            conn.execute(text(f"DELETE FROM {table.name}"))
 
 
 @pytest.fixture(autouse=True)

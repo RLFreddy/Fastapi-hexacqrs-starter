@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, String
+from sqlalchemy import Column, DateTime, String, func
 from sqlalchemy.orm import Session
 
 from src.contexts.users.domain.entities import User
@@ -14,6 +15,8 @@ class UserModel(Base):
     name = Column(String(50), nullable=False)
     email = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(100), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=datetime.now, nullable=False)
 
 
 class SQLAlchemyUserRepository(UserRepository):
@@ -34,3 +37,9 @@ class SQLAlchemyUserRepository(UserRepository):
 
     def get_all(self) -> list[User]:
         return [self._to_domain(u) for u in self.session.query(UserModel).all()]
+
+    def get_all_paginated(self, page: int, size: int) -> tuple[list[User], int]:
+        offset = (page - 1) * size
+        total = self.session.query(UserModel).count()
+        rows = self.session.query(UserModel).offset(offset).limit(size).all()
+        return [self._to_domain(u) for u in rows], total

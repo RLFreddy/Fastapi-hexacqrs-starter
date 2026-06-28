@@ -1,6 +1,7 @@
+from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import Boolean, Column, DateTime, String, func
 from sqlalchemy.orm import Session
 
 from src.contexts.auth.domain.entities import AuthUser
@@ -14,6 +15,8 @@ class AuthUserModel(Base):
     email = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(100), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=datetime.now, nullable=False)
 
 
 class SQLAlchemyAuthRepository(AuthRepository):

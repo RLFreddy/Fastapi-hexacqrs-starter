@@ -3,4 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class GetUsersQuery:
-    pass
+    page: int = 1
+    size: int = 10

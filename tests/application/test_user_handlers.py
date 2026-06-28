@@ -38,26 +38,30 @@ class TestGetUserHandler:
 
 
 class TestGetUsersHandler:
-    def test_get_users_returns_list(self, mock_repo):
+    def test_get_users_returns_paginated(self, mock_repo):
         users = [
             User.create("Alice", "alice@test.com", "pass"),
             User.create("Bob", "bob@test.com", "pass"),
         ]
-        mock_repo.get_all.return_value = users
+        mock_repo.get_all_paginated.return_value = (users, 2)
         handler = GetUsersHandler(mock_repo)
-        query = GetUsersQuery()
+        query = GetUsersQuery(page=1, size=10)
 
         result = handler.handle(query)
 
-        assert len(result) == 2
-        assert result[0]["name"] == "Alice"
-        assert result[1]["name"] == "Bob"
+        assert result["total"] == 2
+        assert result["page"] == 1
+        assert result["size"] == 10
+        assert len(result["items"]) == 2
+        assert result["items"][0]["name"] == "Alice"
+        assert result["items"][1]["name"] == "Bob"
 
     def test_get_users_empty(self, mock_repo):
-        mock_repo.get_all.return_value = []
+        mock_repo.get_all_paginated.return_value = ([], 0)
         handler = GetUsersHandler(mock_repo)
-        query = GetUsersQuery()
+        query = GetUsersQuery(page=1, size=10)
 
         result = handler.handle(query)
 
-        assert result == []
+        assert result["total"] == 0
+        assert result["items"] == []

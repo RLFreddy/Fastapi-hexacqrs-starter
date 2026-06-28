@@ -4,6 +4,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688)](https://fastapi.tiangolo.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Author](https://img.shields.io/badge/by-RLFreddy-gray?logo=github)](https://github.com/RLFreddy)
+[![CI](https://github.com/RLFreddy/Fastapi-hexacqrs-starter/actions/workflows/ci.yml/badge.svg)](https://github.com/RLFreddy/Fastapi-hexacqrs-starter/actions/workflows/ci.yml)
 
 A production-ready **FastAPI** starter with **Hexagonal Architecture** (Ports & Adapters) and **CQRS** pattern. Features JWT authentication, async event-driven user creation via RabbitMQ, PostgreSQL persistence, and Alembic migrations.
 
@@ -113,12 +114,13 @@ The API will be available at **http://localhost:8000/docs**.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/auth/register` | No | Register a new user |
-| POST | `/auth/login` | No | Login, returns JWT token |
-| GET | `/auth/users` | No | List registered auth users |
-| POST | `/users/` | No | Create user (async via RabbitMQ) |
-| GET | `/users/` | JWT | List users |
-| GET | `/users/{id}` | JWT | Get user by ID |
+| GET | `/health` | No | Health check |
+| POST | `/v1/auth/register` | No | Register a new user |
+| POST | `/v1/auth/login` | No | Login, returns JWT token |
+| GET | `/v1/auth/users` | No | List registered auth users |
+| POST | `/v1/users/` | No | Create user (async via RabbitMQ) |
+| GET | `/v1/users/` | JWT | List users (paginated: `?page=1&size=10`) |
+| GET | `/v1/users/{id}` | JWT | Get user by ID |
 
 ---
 

@@ -16,3 +16,7 @@ class UserRepository(ABC):
     @abstractmethod
     def get_all(self) -> list[User]:
         pass
+
+    @abstractmethod
+    def get_all_paginated(self, page: int, size: int) -> tuple[list[User], int]:
+        pass

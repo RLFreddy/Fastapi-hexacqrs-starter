@@ -3,12 +3,15 @@ import logging
 import os
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from src.contexts.auth.interfaces.http import auth_controller
 from src.contexts.users.infrastructure.event_handlers.user_created_handler import start_consumers
 from src.contexts.users.interfaces.http import user_controller
 from src.shared.application.dependency_injection import Container, providers
+from src.shared.application.exceptions import AppException
 from src.shared.infrastructure.event_bus import RabbitMQEventBus
 
 logging.basicConfig(
@@ -26,6 +29,10 @@ openapi_tags = [
         "name": "users",
         "description": "**User management.** Create users (no token required). List and search require a JWT — click the **Authorize** button after logging in.",  # noqa: E501
     },
+    {
+        "name": "health",
+        "description": "**Health check.** Verify the API is running.",
+    },
 ]
 
 app = FastAPI(
@@ -42,10 +49,10 @@ A FastAPI implementation of a hexagonal architecture with CQRS pattern.
 - **Hexagonal Architecture**: Clean separation of domain, application, and infrastructure layers
 
 ## How to use this API
-1. **Register** → `POST /auth/register`
-2. **Login** → `POST /auth/login` (copy the token)
+1. **Register** → `POST /v1/auth/register`
+2. **Login** → `POST /v1/auth/login` (copy the token)
 3. **Authorize** → click the **Authorize** button and paste the token
-4. **Explore** → test the protected endpoints under `/users/`
+4. **Explore** → test the protected endpoints under `/v1/users/`
 """,
     version="1.0.0",
     docs_url="/docs",
@@ -55,6 +62,19 @@ A FastAPI implementation of a hexagonal architecture with CQRS pattern.
         "name": "API Support",
         "url": "https://github.com/RLFreddy/Fastapi-hexacqrs-starter",
     },
+)
+
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 container = Container()
@@ -72,6 +92,11 @@ event_bus_instance = None
 
 app.include_router(user_controller.router)
 app.include_router(auth_controller.router)
+
+
+@app.get("/health", tags=["health"])
+async def health_check():
+    return {"status": "ok"}
 
 
 @app.on_event("startup")

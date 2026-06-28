@@ -1,7 +1,7 @@
 from typing import List
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from src.contexts.auth.application.commands.register_user import RegisterUserCommand
@@ -11,9 +11,10 @@ from src.contexts.auth.application.queries.auth_users_handler import GetAuthUser
 from src.contexts.auth.application.queries.login_user import LoginUserQuery
 from src.contexts.auth.application.queries.login_user_handler import LoginUserHandler
 from src.shared.application.dependency_injection import Container
+from src.shared.application.exceptions import UnauthorizedError, ValidationError
 from src.shared.interfaces.errors import ValidationErrorResponse
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/v1/auth", tags=["auth"])
 
 
 class RegisterRequest(BaseModel):
@@ -152,9 +153,7 @@ def register_user(
         user_id = handler.handle(command)
         return RegisterResponse(user_id=user_id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise ValidationError(detail=str(e))
 
 
 @router.post(
@@ -183,9 +182,7 @@ def login_user(request: LoginRequest, handler: LoginUserHandler = Depends(Provid
             token_type=result["token_type"],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise UnauthorizedError(detail=str(e))
 
 
 @router.get(
@@ -199,9 +196,6 @@ def login_user(request: LoginRequest, handler: LoginUserHandler = Depends(Provid
 )
 @inject
 def get_users(handler: GetAuthUsersHandler = Depends(Provide[Container.auth_users_handler])):
-    try:
-        query = GetAuthUsersQuery()
-        users = handler.handle(query)
-        return [AuthUserResponse(id=u["id"], email=u["email"], is_active=u["is_active"]) for u in users]
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    query = GetAuthUsersQuery()
+    users = handler.handle(query)
+    return [AuthUserResponse(id=u["id"], email=u["email"], is_active=u["is_active"]) for u in users]

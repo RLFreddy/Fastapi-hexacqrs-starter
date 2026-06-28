@@ -1,7 +1,6 @@
-from typing import List
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from src.contexts.users.application.queries.get_user import GetUserQuery
@@ -10,6 +9,7 @@ from src.contexts.users.application.queries.get_users import GetUsersQuery
 from src.contexts.users.application.queries.get_users_handler import GetUsersHandler
 from src.shared.application.auth import get_current_user
 from src.shared.application.dependency_injection import Container
+from src.shared.application.exceptions import EventBusUnavailableError, NotFoundError
 from src.shared.infrastructure.event_bus import RabbitMQEventBus
 from src.shared.interfaces.errors import ValidationErrorResponse
 
@@ -64,6 +64,31 @@ class UserResponse(BaseModel):
     )
 
 
+class UsersPaginatedResponse(BaseModel):
+    items: list[UserResponse]
+    total: int = Field(..., examples=[42], description="Total number of users")
+    page: int = Field(..., examples=[1], description="Current page number")
+    size: int = Field(..., examples=[10], description="Items per page")
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "items": [
+                        {
+                            "id": "ae28faaf-fe63-4665-b785-bb696412ff12",
+                            "name": "John Doe",
+                            "email": "john@example.com",
+                        }
+                    ],
+                    "total": 1,
+                    "page": 1,
+                    "size": 10,
+                }
+            ]
+        }
+    )
+
+
 class ErrorDetail(BaseModel):
     detail: str = Field(..., examples=["Error description"])
     model_config = ConfigDict(
@@ -79,7 +104,7 @@ class ErrorDetail(BaseModel):
     )
 
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/v1/users", tags=["users"])
 
 
 @router.post(
@@ -107,15 +132,15 @@ async def create_user(
             message={"name": user_data.name, "email": user_data.email, "password": user_data.password},
         )
         return UserCreateResponse(message="User creation started")
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    except RuntimeError:
+        raise EventBusUnavailableError()
 
 
 @router.get(
     "/",
-    response_model=List[UserResponse],
-    summary="List all users",
-    description="Returns all users from the users context. Requires JWT authentication.",
+    response_model=UsersPaginatedResponse,
+    summary="List users with pagination",
+    description="Returns a paginated list of users. Requires JWT authentication.",
     responses={
         401: {"model": ErrorDetail, "description": "Not authenticated or invalid/expired token"},
         500: {"model": ErrorDetail, "description": "Internal server error"},
@@ -125,13 +150,17 @@ async def create_user(
 def get_users(
     handler: GetUsersHandler = Depends(Provide[Container.get_users_handler]),
     _current_user: str = Depends(get_current_user),
-) -> list[UserResponse]:
-    try:
-        query = GetUsersQuery()
-        users = handler.handle(query)
-        return [UserResponse(id=u["id"], name=u["name"], email=u["email"]) for u in users]
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    page: int = Query(default=1, ge=1, description="Page number"),
+    size: int = Query(default=10, ge=1, le=100, description="Items per page"),
+) -> UsersPaginatedResponse:
+    query = GetUsersQuery(page=page, size=size)
+    result = handler.handle(query)
+    return UsersPaginatedResponse(
+        items=[UserResponse(id=u["id"], name=u["name"], email=u["email"]) for u in result["items"]],
+        total=result["total"],
+        page=result["page"],
+        size=result["size"],
+    )
 
 
 @router.get(
@@ -152,12 +181,7 @@ def get_user(
     _current_user: str = Depends(get_current_user),
 ) -> UserResponse:
     query = GetUserQuery(user_id=user_id)
-    try:
-        user = handler.handle(query)
-        if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        return UserResponse(id=user["id"], name=user["name"], email=user["email"])
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    user = handler.handle(query)
+    if user is None:
+        raise NotFoundError(entity="User", entity_id=user_id)
+    return UserResponse(id=user["id"], name=user["name"], email=user["email"])
