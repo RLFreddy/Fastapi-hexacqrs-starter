@@ -7,14 +7,13 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from src.contexts.auth.interfaces.http import auth_controller
 from src.contexts.users.infrastructure.event_handlers.user_created_handler import start_consumers
 from src.contexts.users.interfaces.http import user_controller
 from src.shared.application.dependency_injection import Container, providers
 from src.shared.application.exceptions import AppException
-from sqlalchemy import text
-
 from src.shared.infrastructure.config import settings
 from src.shared.infrastructure.database import SessionLocal
 from src.shared.infrastructure.event_bus import RabbitMQEventBus
