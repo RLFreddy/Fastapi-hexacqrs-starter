@@ -10,7 +10,7 @@ from src.contexts.users.application.queries.get_users_handler import GetUsersHan
 from src.shared.application.auth import get_current_user
 from src.shared.application.dependency_injection import Container
 from src.shared.application.exceptions import EventBusUnavailableError, NotFoundError
-from src.shared.infrastructure.event_bus import RabbitMQEventBus
+from src.shared.application.ports import EventBus
 from src.shared.interfaces.errors import ValidationErrorResponse
 
 
@@ -123,7 +123,7 @@ router = APIRouter(prefix="/v1/users", tags=["users"])
 )
 @inject
 async def create_user(
-    user_data: UserCreateRequest, event_bus: RabbitMQEventBus = Depends(Provide[Container.event_bus])
+    user_data: UserCreateRequest, event_bus: EventBus = Depends(Provide[Container.event_bus])
 ) -> UserCreateResponse:
     try:
         await event_bus.publish(
@@ -147,7 +147,7 @@ async def create_user(
     },
 )
 @inject
-def get_users(
+async def get_users(
     handler: GetUsersHandler = Depends(Provide[Container.get_users_handler]),
     _current_user: str = Depends(get_current_user),
     page: int = Query(default=1, ge=1, description="Page number"),
@@ -175,7 +175,7 @@ def get_users(
     },
 )
 @inject
-def get_user(
+async def get_user(
     user_id: str,
     handler: GetUserHandler = Depends(Provide[Container.get_user_handler]),
     _current_user: str = Depends(get_current_user),

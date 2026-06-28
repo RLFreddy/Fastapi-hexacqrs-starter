@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request
@@ -20,6 +21,43 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+consumer_task: asyncio.Task | None = None
+event_bus_instance: RabbitMQEventBus | None = None
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    global consumer_task, event_bus_instance
+    try:
+        event_bus_instance = RabbitMQEventBus(container.config.rabbitmq_url())
+        await event_bus_instance.connect()
+        container.event_bus.override(providers.Object(event_bus_instance))
+        consumer_task = asyncio.create_task(start_consumers(container, event_bus_instance))
+
+        def _on_consumer_done(task: asyncio.Task):
+            if not task.cancelled():
+                exc = task.exception()
+                if exc:
+                    logger.error("Consumer task failed: %s", exc)
+
+        consumer_task.add_done_callback(_on_consumer_done)
+        logger.info("RabbitMQ connected and consumer started")
+    except Exception as e:
+        logger.warning("RabbitMQ not available, running without event bus: %s", e)
+
+    yield
+
+    if consumer_task:
+        consumer_task.cancel()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            logger.info("Consumer task cancelled")
+    if event_bus_instance and event_bus_instance.connection and not event_bus_instance.connection.is_closed:
+        await event_bus_instance.connection.close()
+        logger.info("RabbitMQ connection closed")
+
+
 openapi_tags = [
     {
         "name": "auth",
@@ -37,6 +75,7 @@ openapi_tags = [
 
 app = FastAPI(
     title="Hexacqrs API",
+    lifespan=lifespan,
     openapi_tags=openapi_tags,
     description="""# Hexacqrs API
 
@@ -87,9 +126,6 @@ container.wire(
 
 container.config.rabbitmq_url.from_env("RABBITMQ_URL", required=True)
 
-consumer_task = None
-event_bus_instance = None
-
 app.include_router(user_controller.router)
 app.include_router(auth_controller.router)
 
@@ -97,41 +133,6 @@ app.include_router(auth_controller.router)
 @app.get("/health", tags=["health"])
 async def health_check():
     return {"status": "ok"}
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    global consumer_task, event_bus_instance
-    try:
-        event_bus_instance = RabbitMQEventBus(container.config.rabbitmq_url())
-        await event_bus_instance.connect()
-        container.event_bus.override(providers.Object(event_bus_instance))
-        consumer_task = asyncio.create_task(start_consumers(container, event_bus_instance))
-
-        def _on_consumer_done(task: asyncio.Task):
-            if not task.cancelled():
-                exc = task.exception()
-                if exc:
-                    logger.error("Consumer task failed: %s", exc)
-
-        consumer_task.add_done_callback(_on_consumer_done)
-        logger.info("RabbitMQ connected and consumer started")
-    except Exception as e:
-        logger.warning("RabbitMQ not available, running without event bus: %s", e)
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    global consumer_task, event_bus_instance
-    if consumer_task:
-        consumer_task.cancel()
-        try:
-            await consumer_task
-        except asyncio.CancelledError:
-            logger.info("Consumer task cancelled")
-    if event_bus_instance and event_bus_instance.connection and not event_bus_instance.connection.is_closed:
-        await event_bus_instance.connection.close()
-        logger.info("RabbitMQ connection closed")
 
 
 if __name__ == "__main__":

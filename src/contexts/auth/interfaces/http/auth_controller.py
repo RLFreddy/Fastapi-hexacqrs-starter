@@ -145,7 +145,7 @@ class ErrorDetail(BaseModel):
     },
 )
 @inject
-def register_user(
+async def register_user(
     request: RegisterRequest, handler: RegisterUserHandler = Depends(Provide[Container.auth_register_handler])
 ):
     try:
@@ -171,7 +171,7 @@ def register_user(
     },
 )
 @inject
-def login_user(request: LoginRequest, handler: LoginUserHandler = Depends(Provide[Container.auth_login_handler])):
+async def login_user(request: LoginRequest, handler: LoginUserHandler = Depends(Provide[Container.auth_login_handler])):
     try:
         query = LoginUserQuery(email=request.email, password=request.password)
         result = handler.handle(query)
@@ -195,7 +195,7 @@ def login_user(request: LoginRequest, handler: LoginUserHandler = Depends(Provid
     },
 )
 @inject
-def get_users(handler: GetAuthUsersHandler = Depends(Provide[Container.auth_users_handler])):
+async def get_users(handler: GetAuthUsersHandler = Depends(Provide[Container.auth_users_handler])):
     query = GetAuthUsersQuery()
     users = handler.handle(query)
     return [AuthUserResponse(id=u["id"], email=u["email"], is_active=u["is_active"]) for u in users]

@@ -4,8 +4,10 @@ from typing import Awaitable, Callable
 
 import aio_pika
 
+from src.shared.application.ports import EventBus
 
-class RabbitMQEventBus:
+
+class RabbitMQEventBus(EventBus):
     def __init__(self, connection_url: str):
         self.connection_url = connection_url
         self.connection = None

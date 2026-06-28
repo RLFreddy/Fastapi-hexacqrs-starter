@@ -10,10 +10,11 @@ from src.contexts.users.application.commands.create_user_handler import CreateUs
 from src.contexts.users.application.queries.get_user_handler import GetUserHandler
 from src.contexts.users.application.queries.get_users_handler import GetUsersHandler
 from src.contexts.users.infrastructure.repositories.sqlalchemy_user_repository import SQLAlchemyUserRepository
+from src.shared.application.ports import EventBus
 from src.shared.infrastructure.database import SessionLocal
 
 
-class _EventBusUnavailable:
+class _EventBusUnavailable(EventBus):
     async def publish(self, exchange: str, routing_key: str, message: dict):
         raise RuntimeError("Event bus unavailable: RabbitMQ is not connected")
 
