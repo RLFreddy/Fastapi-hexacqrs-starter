@@ -3,13 +3,12 @@ FROM python:3.12-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY pyproject.toml uv.lock .
-RUN uv sync --frozen --system --no-dev --no-install-project --no-cache
+RUN UV_SYSTEM_PYTHON=1 uv sync --frozen --no-dev --no-install-project --no-cache
 
 FROM python:3.12-slim
 

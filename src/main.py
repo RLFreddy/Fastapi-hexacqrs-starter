@@ -75,16 +75,16 @@ async def lifespan(application: FastAPI):
 
 openapi_tags = [
     {
+        "name": "health",
+        "description": "**Health check.** Verify the API is running and its dependencies.",
+    },
+    {
         "name": "auth",
         "description": "**Authentication flow.** Start here: register an account, then login to obtain a JWT token.",
     },
     {
         "name": "users",
         "description": "**User management.** Create users (no token required). List and search require a JWT — click the **Authorize** button after logging in.",  # noqa: E501
-    },
-    {
-        "name": "health",
-        "description": "**Health check.** Verify the API is running.",
     },
 ]
 

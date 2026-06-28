@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#64748b"/>
+    </marker>
+    <linearGradient id="layer1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="layer2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="layer3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e293b">Architecture Overview</text>
+
+  <!-- === LAYER 3: Interface (outermost) === -->
+  <rect x="20" y="50" width="860" height="180" rx="12" fill="#e0f2fe" stroke="#7dd3fc" stroke-width="2"/>
+  <text x="40" y="78" font-size="14" font-weight="bold" fill="#0369a1">INTERFACE LAYER — Controllers / Adapters</text>
+
+  <!-- HTTP Controller box -->
+  <rect x="50" y="95" width="240" height="110" rx="8" fill="white" stroke="#93c5fd" stroke-width="1.5"/>
+  <rect x="50" y="95" width="240" height="28" rx="8" fill="url(#layer1)"/>
+  <text x="170" y="113" text-anchor="middle" font-size="13" font-weight="bold" fill="white">HTTP Controllers</text>
+  <text x="170" y="138" text-anchor="middle" font-size="11" fill="#475569">FastAPI routes</text>
+  <text x="170" y="154" text-anchor="middle" font-size="11" fill="#475569">Request validation (Pydantic)</text>
+  <text x="170" y="170" text-anchor="middle" font-size="11" fill="#475569">JWT auth middleware</text>
+  <text x="170" y="186" text-anchor="middle" font-size="11" fill="#475569">CORS</text>
+
+  <!-- RabbitMQ Consumer box -->
+  <rect x="340" y="95" width="240" height="110" rx="8" fill="white" stroke="#93c5fd" stroke-width="1.5"/>
+  <rect x="340" y="95" width="240" height="28" rx="8" fill="url(#layer1)"/>
+  <text x="460" y="113" text-anchor="middle" font-size="13" font-weight="bold" fill="white">Async Consumers</text>
+  <text x="460" y="138" text-anchor="middle" font-size="11" fill="#475569">RabbitMQ event listeners</text>
+  <text x="460" y="154" text-anchor="middle" font-size="11" fill="#475569">Background user creation</text>
+  <text x="460" y="170" text-anchor="middle" font-size="11" fill="#475569">Event deserialization</text>
+
+  <!-- External Systems box -->
+  <rect x="630" y="95" width="230" height="110" rx="8" fill="white" stroke="#93c5fd" stroke-width="1.5"/>
+  <rect x="630" y="95" width="230" height="28" rx="8" fill="url(#layer1)"/>
+  <text x="745" y="113" text-anchor="middle" font-size="13" font-weight="bold" fill="white">External Systems</text>
+  <text x="745" y="138" text-anchor="middle" font-size="11" fill="#475569">PostgreSQL database</text>
+  <text x="745" y="154" text-anchor="middle" font-size="11" fill="#475569">RabbitMQ message broker</text>
+  <text x="745" y="186" text-anchor="middle" font-size="11" fill="#475569">icon: 🔗</text>
+
+  <!-- === LAYER 2: Application === -->
+  <rect x="120" y="260" width="660" height="140" rx="12" fill="#f3e8ff" stroke="#d8b4fe" stroke-width="2"/>
+  <text x="140" y="288" font-size="14" font-weight="bold" fill="#6b21a8">APPLICATION LAYER — Use Cases / Handlers</text>
+
+  <!-- Command side -->
+  <rect x="140" y="300" width="290" height="85" rx="8" fill="white" stroke="#c4b5fd" stroke-width="1.5"/>
+  <rect x="140" y="300" width="290" height="26" rx="8" fill="url(#layer2)"/>
+  <text x="285" y="318" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Command Side (CQRS Write)</text>
+  <text x="285" y="342" text-anchor="middle" font-size="11" fill="#475569">RegisterUserHandler</text>
+  <text x="285" y="358" text-anchor="middle" font-size="11" fill="#475569">CreateUserHandler</text>
+  <text x="285" y="374" text-anchor="middle" font-size="11" fill="#475569">Commands: RegisterUserCommand</text>
+
+  <!-- Query side -->
+  <rect x="470" y="300" width="290" height="85" rx="8" fill="white" stroke="#c4b5fd" stroke-width="1.5"/>
+  <rect x="470" y="300" width="290" height="26" rx="8" fill="url(#layer2)"/>
+  <text x="615" y="318" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Query Side (CQRS Read)</text>
+  <text x="615" y="342" text-anchor="middle" font-size="11" fill="#475569">LoginUserHandler</text>
+  <text x="615" y="358" text-anchor="middle" font-size="11" fill="#475569">GetUsersHandler / GetUserHandler</text>
+  <text x="615" y="374" text-anchor="middle" font-size="11" fill="#475569">GetAuthUsersHandler</text>
+
+  <!-- === LAYER 1: Domain (innermost) === -->
+  <rect x="220" y="430" width="460" height="150" rx="12" fill="#d1fae5" stroke="#6ee7b7" stroke-width="2"/>
+  <text x="240" y="458" font-size="14" font-weight="bold" fill="#047857">DOMAIN LAYER — Core / Business Logic</text>
+
+  <rect x="240" y="475" width="200" height="90" rx="8" fill="white" stroke="#6ee7b7" stroke-width="1.5"/>
+  <rect x="240" y="475" width="200" height="26" rx="8" fill="url(#layer3)"/>
+  <text x="340" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Entities</text>
+  <text x="340" y="517" text-anchor="middle" font-size="11" fill="#475569">User (auth context)</text>
+  <text x="340" y="533" text-anchor="middle" font-size="11" fill="#475569">User (users context)</text>
+  <text x="340" y="549" text-anchor="middle" font-size="11" fill="#475569">Value Objects</text>
+
+  <rect x="460" y="475" width="200" height="90" rx="8" fill="white" stroke="#6ee7b7" stroke-width="1.5"/>
+  <rect x="460" y="475" width="200" height="26" rx="8" fill="url(#layer3)"/>
+  <text x="560" y="493" text-anchor="middle" font-size="12" font-weight="bold" fill="white">Ports (Interfaces)</text>
+  <text x="560" y="517" text-anchor="middle" font-size="11" fill="#475569">UserRepository (ABC)</text>
+  <text x="560" y="533" text-anchor="middle" font-size="11" fill="#475569">AuthRepository (ABC)</text>
+  <text x="560" y="549" text-anchor="middle" font-size="11" fill="#475569">EventBus (ABC)</text>
+
+  <!-- Arrows between layers -->
+  <line x1="170" y1="205" x2="285" y2="290" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="460" y1="205" x2="460" y2="290" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="745" y1="205" x2="615" y2="290" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="285" y1="385" x2="340" y2="460" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="615" y1="385" x2="560" y2="460" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Labels on arrows -->
+  <text x="310" y="370" text-anchor="middle" font-size="10" fill="#64748b">commands</text>
+  <text x="610" y="370" text-anchor="middle" font-size="10" fill="#64748b">queries</text>
+  <text x="395" y="250" text-anchor="middle" font-size="10" fill="#64748b">calls</text>
+  <text x="630" y="250" text-anchor="middle" font-size="10" fill="#64748b">events / data</text>
+
+  <!-- Context boundaries -->
+  <text x="40" y="620" font-size="11" fill="#94a3b8">Auth Context</text>
+  <line x1="110" y1="610" x2="110" y2="630" stroke="#94a3b8" stroke-width="1"/>
+  <text x="120" y="620" font-size="11" fill="#94a3b8">Users Context</text>
+  <line x1="190" y1="610" x2="190" y2="630" stroke="#94a3b8" stroke-width="1"/>
+  <text x="200" y="620" font-size="11" fill="#94a3b8">Shared (auth, DI, config, DB)</text>
+</svg>

@@ -8,6 +8,10 @@
 
 A production-ready **FastAPI** starter with **Hexagonal Architecture** (Ports & Adapters) and **CQRS** pattern. Features JWT authentication, async event-driven user creation via RabbitMQ, PostgreSQL persistence, and Alembic migrations.
 
+<p align="center">
+  <img src="docs/swagger-screenshot.png" alt="Swagger API Documentation" width="700">
+</p>
+
 ---
 
 ## Prerequisites
@@ -139,13 +143,20 @@ The API will be available at **http://localhost:8000/docs**.
 
 ---
 
-## Project Structure Principles
+## Architecture
 
-- **Hexagonal Architecture**: Domain core is framework-agnostic, infrastructure adapts
-- **CQRS**: Separated command (write) and query (read) handlers per context
-- **Bounded Contexts**: Each context is self-contained with its own domain, application, and infrastructure layers
-- **Dependency Injection**: Centralized wiring via `dependency-injector`, swappable implementations
-- **Event-Driven**: Async processing via RabbitMQ for side-effects (user creation)
+<p align="center">
+  <img src="docs/architecture.svg" alt="Hexagonal Architecture Diagram" width="800">
+</p>
+
+The project follows **Hexagonal Architecture** (Ports & Adapters) with **CQRS**:
+
+- **Domain layer** — Framework-agnostic entities, value objects, and port interfaces (ABCs)
+- **Application layer** — Command/Query handlers orchestrate use cases; depends only on domain ports
+- **Interface layer** — FastAPI controllers, RabbitMQ consumers, and external adapters
+- **Bounded Contexts** — `auth` and `users` are self-contained with their own layers
+- **Event-Driven** — Async user creation via RabbitMQ, consumed by background workers
+- **Dependency Injection** — Centralized wiring via `dependency-injector`
 
 ---
 
