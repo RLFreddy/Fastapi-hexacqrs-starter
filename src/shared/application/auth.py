@@ -1,4 +1,3 @@
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Optional
 
@@ -6,9 +5,11 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-SECRET_KEY = os.environ["JWT_SECRET"]
-ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+from src.shared.infrastructure.config import settings
+
+SECRET_KEY = settings.jwt_secret
+ALGORITHM = settings.jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.jwt_access_token_expire_minutes
 
 security = HTTPBearer(auto_error=False)
 

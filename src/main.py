@@ -1,6 +1,6 @@
 import asyncio
+import json
 import logging
-import os
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -13,12 +13,28 @@ from src.contexts.users.infrastructure.event_handlers.user_created_handler impor
 from src.contexts.users.interfaces.http import user_controller
 from src.shared.application.dependency_injection import Container, providers
 from src.shared.application.exceptions import AppException
+from sqlalchemy import text
+
+from src.shared.infrastructure.config import settings
+from src.shared.infrastructure.database import SessionLocal
 from src.shared.infrastructure.event_bus import RabbitMQEventBus
 
-logging.basicConfig(
-    level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper()),
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+
+class JSONFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        return json.dumps(
+            {
+                "timestamp": self.formatTime(record),
+                "level": record.levelname,
+                "logger": record.name,
+                "message": record.getMessage(),
+            }
+        )
+
+
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+logging.basicConfig(level=getattr(logging, settings.log_level.upper()), handlers=[handler], force=True)
 logger = logging.getLogger(__name__)
 
 consumer_task: asyncio.Task | None = None
@@ -110,7 +126,7 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
+    allow_origins=settings.cors_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -132,12 +148,17 @@ app.include_router(auth_controller.router)
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    return {"status": "ok"}
+    db_ok = False
+    try:
+        with SessionLocal() as session:
+            session.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception:
+        pass
+    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "unavailable"}
 
 
 if __name__ == "__main__":
     logger.info("Starting FastAPI server with Uvicorn...")
-    host = os.environ.get("APP_HOST", "0.0.0.0")
-    port = int(os.environ.get("APP_PORT", "8000"))
-    uvicorn.run(app, host=host, port=port)
+    uvicorn.run(app, host=settings.app_host, port=settings.app_port)
     logger.info("FastAPI server stopped.")
