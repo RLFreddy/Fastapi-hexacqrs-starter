@@ -99,6 +99,7 @@ The API will be available at **http://localhost:8000/docs**.
 | `APP_HOST` | `0.0.0.0` | Server host |
 | `APP_PORT` | `8000` | Server port |
 | `LOG_LEVEL` | `INFO` | Logging level |
+| `CORS_ORIGINS` | `*` | Allowed CORS origins (comma-separated) |
 | `JWT_SECRET` | `change-me-in-production` | Secret for JWT signing |
 | `JWT_ALGORITHM` | `HS256` | JWT algorithm |
 | `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Token expiry in minutes |
