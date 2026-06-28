@@ -1,12 +1,13 @@
-import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
+from src.shared.infrastructure.config import settings
+
 config = context.config
 section = config.config_ini_section
-config.set_section_option(section, "sqlalchemy.url", os.environ["DATABASE_URL"])
+config.set_section_option(section, "sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
